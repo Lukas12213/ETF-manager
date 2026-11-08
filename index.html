@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101722"><meta name="description" content="Menedżer portfela ETF VWCE i EMIM">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">
+<title>ETF Portfolio Manager</title>
+<style>
+:root{color-scheme:dark;--bg:#0b111a;--panel:#151f2d;--line:#2b3b50;--txt:#edf3fb;--muted:#9aacc1;--blue:#78a9ff;--green:#58d6a0;--orange:#ffca78;--red:#ff8188}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#0b111a,#142033 65%,#0b111a);color:var(--txt);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header,main{max-width:980px;margin:auto;padding-left:17px;padding-right:17px}header{padding-top:25px;padding-bottom:12px}h1{font-size:25px;margin:0 0 5px}h2{font-size:17px;margin:0 0 14px}.muted,.small{color:var(--muted)}.small{font-size:12px;line-height:1.5}main{padding-top:8px;padding-bottom:36px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.card{background:#151f2dee;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:13px;box-shadow:0 7px 22px #0002}.wide{grid-column:1/-1}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.metric{font-size:25px;font-weight:750;font-variant-numeric:tabular-nums;margin:5px 0}.pill{font-size:12px;color:#c7dcff;background:#263b55;border-radius:30px;padding:4px 9px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}.field input{width:100%;min-width:0;background:#0c1521;border:1px solid var(--line);border-radius:9px;color:var(--txt);padding:10px;font-size:15px}button,.filelabel{border:0;border-radius:10px;padding:10px 13px;background:#29415f;color:white;font-weight:650;font-size:13px;cursor:pointer}.primary{background:#267a5e}.secondary{background:#2a3545}.warn{background:#69434a}.filelabel input{display:none}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.bar{height:12px;border-radius:30px;background:#26364a;display:flex;overflow:hidden;margin:12px 0}.bar span:first-child{background:var(--blue)}.bar span:last-child{background:var(--green)}.notice{padding:12px;border-radius:11px;background:#342d20;border:1px solid #665331;color:#ffdda2;font-size:13px;line-height:1.5}.status{font-size:12px;color:var(--muted);min-height:18px;margin-top:8px}table{width:100%;border-collapse:collapse}td,th{padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}th{color:var(--muted);font-weight:500}.right{text-align:right}.positive{color:var(--green)}.negative{color:var(--red)}canvas{width:100%;height:155px}.footer{font-size:12px;line-height:1.5;color:var(--muted);padding:5px 2px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.metric{font-size:23px}}
+</style></head><body>
+<header><h1>ETF Portfolio Manager</h1><p class="muted" style="margin:0">VWCE + EMIM · portfel długoterminowy</p></header>
+<main>
+<div class="grid">
+<section class="card"><div class="row"><span class="muted">Wartość portfela</span><span class="pill">PLN</span></div><div class="metric" id="total">—</div><div class="small" id="totalNote">ETF-y + gotówka</div></section>
+<section class="card"><div class="row"><span class="muted">Docelowa alokacja</span><span class="pill">80 / 20</span></div><div class="metric">VWCE 80%</div><div class="small">EMIM 20% · oba fundusze akcyjne</div></section>
+<section class="card wide"><h2>Aktualny portfel</h2>
+<div class="fields">
+<div class="field"><label>VWCE – wartość w PLN</label><input id="vwceValue" type="number" min="0" step="0.01" value="0"></div>
+<div class="field"><label>EMIM – wartość w PLN</label><input id="emimValue" type="number" min="0" step="0.01" value="237.04"></div>
+<div class="field"><label>Gotówka – PLN</label><input id="cash" type="number" min="0" step="0.01" value="250.03"></div>
+<div class="field"><label>Miesięczna wpłata – PLN</label><input id="monthly" type="number" min="0" step="1" value="500"></div>
+<div class="field"><label>Cel VWCE – %</label><input id="targetV" type="number" min="0" max="100" step="1" value="80"></div>
+<div class="field"><label>Horyzont – lata</label><input id="years" type="number" min="1" max="60" step="1" value="15"></div>
+</div>
+<div class="bar"><span id="vBar" style="width:0%"></span><span id="eBar" style="width:0%"></span></div>
+<div class="row small"><span id="vShare">VWCE: —</span><span id="eShare">EMIM: —</span></div>
+<div class="actions"><button class="primary" id="save">Zapisz dane</button><button class="secondary" id="reset">Przywróć przykładowe</button></div><div class="status" id="saveStatus"></div>
+</section>
+<section class="card"><h2>Propozycja kolejnego zakupu</h2><div class="metric" id="buyV">VWCE: —</div><div class="metric" id="buyE">EMIM: —</div><p class="small" id="buyNote">Wyliczenie podziału miesięcznej wpłaty według celu 80/20.</p></section>
+<section class="card"><h2>Plan inwestowania</h2><div class="metric" id="invested">—</div><div class="small">Suma przyszłych wpłat, bez obecnego portfela</div><p class="small" id="planNote"></p></section>
+<section class="card wide"><h2>Symulacja wartości portfela</h2><div class="fields">
+<div class="field"><label>Założona średnia stopa zwrotu rocznie (%)</label><input id="returnRate" type="number" step="0.1" value="6"></div>
+<div class="field"><label>Wpłata na koniec miesiąca</label><input id="monthlySim" type="number" step="1" value="500"></div>
+</div><div class="metric" id="projection">—</div><div class="small">Orientacyjna wartość po wskazanym okresie, przy stałej stopie zwrotu i wpłatach miesięcznych. To nie jest prognoza ani gwarancja.</div></section>
+<section class="card wide"><h2>Ceny ETF i import danych</h2><p class="small">Możesz wpisać wartości z XTB ręcznie albo zaimportować zrzut ekranu. Automatyczne notowania są orientacyjne i zależą od dostępności zewnętrznego dostawcy.</p>
+<div class="actions"><button id="prices" class="secondary">Pobierz orientacyjne ceny</button><label class="filelabel">Wybierz screenshot XTB<input id="imageInput" type="file" accept="image/*"></label><button id="csv" class="secondary">Eksport CSV</button></div><div id="priceStatus" class="status"></div><div id="ocrResult" class="small"></div>
+</section>
+<section class="card wide"><h2>Notatki i zasady</h2><ul class="small"><li>VWCE obejmuje rynki rozwinięte i wschodzące; EMIM zwiększa udział rynków wschodzących ponad ich wagę w VWCE.</li><li>Portfel VWCE/EMIM pozostaje w 100% akcyjny. Przy umiarkowanej tolerancji ryzyka rozważ, czy taki poziom zmienności jest dla Ciebie odpowiedni.</li><li>Kalkulator nie uwzględnia prowizji, spreadów, podatków, minimalnych wielkości zleceń ani ułamkowych jednostek.</li></ul></section>
+</div>
+<p class="footer">Dane zapisują się lokalnie w tej przeglądarce. Aplikacja nie łączy się z kontem XTB, nie składa zleceń i nie sprzedaje aktywów. OCR jest eksperymentalny — przed zapisaniem sprawdź odczytane kwoty. Notowania mogą być opóźnione lub niedostępne.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+const $=id=>document.getElementById(id), ids=['vwceValue','emimValue','cash','monthly','targetV','years','returnRate','monthlySim'];
+const defaults={vwceValue:0,emimValue:237.04,cash:250.03,monthly:500,targetV:80,years:15,returnRate:6,monthlySim:500};
+function num(id){return Math.max(0,Number($(id).value)||0)}
+function data(){return Object.fromEntries(ids.map(id=>[id,num(id)]))}
+function money(n){return (n||0).toLocaleString('pl-PL',{style:'currency',currency:'PLN',maximumFractionDigits:2})}
+function render(){
+ const d=data(),v=d.vwceValue,e=d.emimValue,c=d.cash,total=v+e+c,invested=v+e;
+ $('total').textContent=money(total);$('totalNote').textContent=`ETF-y: ${money(invested)} · gotówka: ${money(c)}`;
+ const share=invested?100*v/invested:0; $('vBar').style.width=share+'%';$('eBar').style.width=(100-share)+'%';
+ $('vShare').textContent=`VWCE: ${share.toFixed(1)}%`; $('eShare').textContent=`EMIM: ${(100-share).toFixed(1)}%`;
+ const monthly=d.monthly,target=d.targetV/100,desiredV=target*(invested+monthly),buyV=Math.min(monthly,Math.max(0,desiredV-v)),buyE=monthly-buyV;
+ $('buyV').textContent=`VWCE: ${money(buyV)}`;$('buyE').textContent=`EMIM: ${money(buyE)}`;
+ $('buyNote').textContent=`Szacunkowy podział wpłaty ${money(monthly)}. Po zakupie udział może odbiegać od celu z powodu cen jednostek i prowizji.`;
+ $('invested').textContent=money(monthly*12*d.years);$('planNote').textContent=`Wpłaty przez ${d.years} lat: ${money(monthly*12*d.years)}. Bez uwzględnienia wzrostu/spadku cen.`;
+ const r=d.returnRate/100/12,n=Math.round(d.years*12),p=d.monthlySim;
+ const future=r===0?total+p*n:total*Math.pow(1+r,n)+p*(Math.pow(1+r,n)-1)/r;
+ $('projection').textContent=money(future);
+}
+function save(){localStorage.setItem('etfpm-data',JSON.stringify(data()));$('saveStatus').textContent='Zapisano lokalnie.';render()}
+function load(){try{const d=JSON.parse(localStorage.getItem('etfpm-data')||'null');if(d)ids.forEach(k=>{if(d[k]!==undefined)$(k).value=d[k]})}catch(e){}render()}
+ids.forEach(id=>$(id).addEventListener('input',render));$('save').onclick=save;
+$('reset').onclick=()=>{ids.forEach(k=>$(k).value=defaults[k]);save()};
+$('csv').onclick=()=>{const d=data(),rows=[['Pole','Wartość'],...Object.entries(d)];const csv=rows.map(r=>r.join(';')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='moj-portfel-etf.csv';a.click();URL.revokeObjectURL(a.href)};
+$('prices').onclick=async()=>{const s=$('priceStatus');s.textContent='Pobieranie danych…';try{
+ const symbols=['VWCE.DE','EMIM.L'];let vals=[];
+ for(const sym of symbols){const url='https://query1.finance.yahoo.com/v8/finance/chart/'+sym+'?range=5d&interval=1d';const res=await fetch(url);if(!res.ok)throw Error('Dostawca odrzucił żądanie');const j=await res.json();const q=j.chart.result[0].meta;vals.push({sym,price:q.regularMarketPrice,currency:q.currency})}
+ s.textContent='Ostatnie dostępne notowania: '+vals.map(x=>`${x.sym}: ${x.price} ${x.currency}`).join(' · ')+'. Kursy nie są automatycznie przeliczane na wycenę portfela.';
+ }catch(err){s.textContent='Nie udało się pobrać cen. Dostawca może blokować zapytania z przeglądarki (CORS) lub być chwilowo niedostępny. '+err.message}}
+$('imageInput').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;const out=$('ocrResult');out.textContent='Odczytuję obraz — może to potrwać…';try{
+ if(!window.Tesseract)throw Error('Nie załadowano modułu OCR. Sprawdź internet.');
+ const result=await Tesseract.recognize(f,'pol+eng');const text=result.data.text;out.textContent='Tekst odczytany ze zrzutu (sprawdź ręcznie):\\n'+text.slice(0,1800);
+ }catch(err){out.textContent='OCR nie powiódł się: '+err.message}}
+load();
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script></body></html>
